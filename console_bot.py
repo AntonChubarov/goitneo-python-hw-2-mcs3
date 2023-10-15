@@ -63,7 +63,15 @@ def greet() -> str:
 
 def add_contact(name: str, phone: str) -> str:
     if name in contacts:
-        return f"Name {name} already exists. Use command \"change\" to update"
+        raise ValueError(
+            f"name {name} already exists. "
+            "Use command \"change\" to update")
+
+    if not name or name.isspace():
+        raise ValueError("empty name")
+
+    if not phone or phone.isspace():
+        raise ValueError("empty phone")
 
     contacts[name] = phone
     return f"{name} was added to your contacts"
@@ -71,15 +79,28 @@ def add_contact(name: str, phone: str) -> str:
 
 def change_contact(name: str, phone: str) -> str:
     if name not in contacts:
-        return f"There is no {name} in contacts. Use command \"add\" to create"
+        raise ValueError(
+            f"there is no name {name} in contacts. "
+            "Use command \"add\" to create")
+
+    if not name or name.isspace():
+        raise ValueError("empty name")
+
+    if not phone or phone.isspace():
+        raise ValueError("empty phone")
 
     contacts[name] = phone
     return f"{name}'s contact was updated"
 
 
 def show_phone(name: str) -> str:
+    if not name or name.isspace():
+        raise ValueError("empty name")
+
     if name not in contacts:
-        return f"There is no {name} in contacts. Use command \"add\" to create"
+        raise ValueError(
+            f"There is no name {name} in contacts. "
+            "Use command \"add\" to create")
 
     return contacts[name]
 
@@ -96,15 +117,42 @@ def get_all() -> str:
     return contacts_to_return.rstrip()
 
 
+def critical_error(func):
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except json.JSONDecodeError as jde:
+            print(f"json decode error: {jde}")
+            sys.exit(1)
+        except ValueError as ve:
+            print(f"critical value error: {ve}")
+            sys.exit(1)
+        except FileNotFoundError as fnfe:
+            print(f"file not found error: {fnfe}")
+            sys.exit(1)
+        except KeyError as ke:
+            print(f"key error: {ke}")
+            sys.exit(1)
+        except PermissionError as pe:
+            print(f"permission error: {pe}")
+            sys.exit(1)
+        except argparse.ArgumentError as ape:
+            print(f"argument parse error: {ape}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"unexpected critical error: {e}")
+            sys.exit(1)
+
+    return inner
+
+
+@critical_error
 def shutdown():
-    try:
-        save_contacts()
-    except Exception as e:
-        print(f"Unable to save contacts: {e}")
-    finally:
-        sys.exit(0)
+    save_contacts()
+    sys.exit()
 
 
+@critical_error
 def init():
     signal.signal(signal.SIGINT, handle_system_signal)
     signal.signal(signal.SIGTERM, handle_system_signal)
@@ -119,13 +167,26 @@ def init():
     global contacts_file_name
     contacts_file_name = args.file
 
-    try:
-        load_contacts()
-    except Exception as e:
-        print(f"Unable to load contacts file: {e}")
-        sys.exit(0)
+    load_contacts()
 
 
+def input_error(func):
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValueError as ve:
+            return f"value error: {ve}"
+        except KeyError as ke:
+            return f"key error: {ke}"
+        except IndexError as ie:
+            return f"index error: {ie}"
+        except Exception as e:
+            return f"unexpected error: {e}"
+
+    return inner
+
+
+@input_error
 def handle_command(command: dict[str, str]) -> str:
     cmd = command["command"]
 
@@ -140,7 +201,7 @@ def handle_command(command: dict[str, str]) -> str:
     if cmd == "all":
         return get_all()
 
-    return f"Invalid command: {cmd}"
+    raise ValueError(f"invalid command: {cmd}")
 
 
 def parse_command(user_input: str) -> dict[str, str]:
@@ -164,6 +225,8 @@ def parse_command(user_input: str) -> dict[str, str]:
 
 
 def main():
+    init()
+
     print("Welcome to the assistant bot!")
 
     while True:
@@ -182,5 +245,4 @@ def main():
 
 
 if __name__ == "__main__":
-    init()
     main()

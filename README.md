@@ -16,3 +16,8 @@ You can also run the application with the default file as follows:
 python3 console_bot.py
 ```
 In this case, the tool will use the default './data/contacts.json' file.
+
+### Improvements added to previous version from [goitneo-python-hw-1-mcs3](https://github.com/AntonChubarov/goitneo-python-hw-1-mcs3) repository:
+
+1. Added errors handling using decorators
+2. Developed classes for future refactoring
