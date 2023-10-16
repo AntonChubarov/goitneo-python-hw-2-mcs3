@@ -14,7 +14,7 @@ class Name(Field):
 
 
 class Phone(Field):
-    def __init__(self, value):
+    def __init__(self, value: str):
         if not self.is_valid_phone(value):
             raise ValueError("Invalid phone number format")
         super().__init__(value)
@@ -23,7 +23,7 @@ class Phone(Field):
         return self.value == other.value
 
     @staticmethod
-    def is_valid_phone(value):
+    def is_valid_phone(value: str):
         return len(str(value)) == 10 and value.isdigit()
 
 
@@ -33,7 +33,11 @@ class Record:
         self.phones = []
 
     def add_phone(self, phone: str):
-        self.phones.append(Phone(phone))
+        phone = Phone(phone)
+        if phone in self.phones:
+            raise ValueError(f"{self.name} record has phone {phone}")
+
+        self.phones.append(phone)
 
     def remove_phone(self, phone: str):
         phone = Phone(phone)
@@ -74,8 +78,17 @@ class AddressBook(UserDict):
         if name in self.data:
             del self.data[name]
 
+    def __str__(self):
+        result = ""
+        for record in self.data.values():
+            result += str(record) + "\n"
+
+        return result
+
 
 if __name__ == "__main__":
+    # task test script
+
     book = AddressBook()
 
     john_record = Record("John")
@@ -99,7 +112,24 @@ if __name__ == "__main__":
     found_phone = john.find_phone("5555555555")
     print(f"{john.name}: {found_phone}")
 
+    book.delete("Jane")
+    
+    # additional test script
+
     john_record.remove_phone("5555555555")
     print(john_record)
 
-    book.delete("Jane")
+    try:
+        john_record.add_phone("1112223333")
+    except Exception as e:
+        print(f"error: {e}")
+
+    try:
+        john_record.edit_phone("5555555555", "6666666666")
+    except Exception as e:
+        print(f"error: {e}")
+
+    book.add_record(jane_record)
+    jane_record.add_phone("0975554862")
+
+    print(str(book))
