@@ -16,7 +16,8 @@ class Name(Field):
 class Phone(Field):
     def __init__(self, value: str):
         if not self.is_valid_phone(value):
-            raise ValueError("Invalid phone number format")
+            raise ValueError(
+                f"phone {value} has invalid format: must be 10 digits")
         super().__init__(value)
 
     def __eq__(self, other) -> bool:
@@ -30,7 +31,7 @@ class Phone(Field):
 class Record:
     def __init__(self, name: str):
         self.name = Name(name)
-        self.phones = []
+        self.phones: list[Phone] = []
 
     def add_phone(self, phone: str):
         phone = Phone(phone)
@@ -54,7 +55,7 @@ class Record:
         raise ValueError(
             f"phone {old_phone} wasn't found in record {self.name}")
 
-    def find_phone(self, phone):
+    def find_phone(self, phone: str) -> Phone:
         for p in self.phones:
             if str(p) == phone:
                 return p
@@ -71,7 +72,7 @@ class AddressBook(UserDict):
             raise ValueError("record must be an instance of the Record class")
         self.data[record.name.value] = record
 
-    def find(self, name):
+    def find(self, name: str) -> Record:
         return self.data[name]
 
     def delete(self, name):
@@ -83,11 +84,12 @@ class AddressBook(UserDict):
         for record in self.data.values():
             result += str(record) + "\n"
 
-        return result
+        return result.rstrip()
 
 
 if __name__ == "__main__":
-    # task test script
+    # task reqirements test script
+    print("Task reqirements test script:")
 
     book = AddressBook()
 
@@ -113,23 +115,39 @@ if __name__ == "__main__":
     print(f"{john.name}: {found_phone}")
 
     book.delete("Jane")
-    
+
     # additional test script
+    print("\nAdditional test script:")
 
     john_record.remove_phone("5555555555")
     print(john_record)
 
     try:
         john_record.add_phone("1112223333")
-    except Exception as e:
-        print(f"error: {e}")
+    except ValueError as ve:
+        print(f"error: {ve}")
+
+    try:
+        john_record.add_phone("11122233334")
+    except ValueError as ve:
+        print(f"error: {ve}")
+
+    try:
+        john_record.add_phone("111222333")
+    except ValueError as ve:
+        print(f"error: {ve}")
 
     try:
         john_record.edit_phone("5555555555", "6666666666")
-    except Exception as e:
-        print(f"error: {e}")
+    except ValueError as ve:
+        print(f"error: {ve}")
 
     book.add_record(jane_record)
     jane_record.add_phone("0975554862")
+
+    try:
+        print(book.find("Alex"))
+    except KeyError as ke:
+        print(f"error: {ke}")
 
     print(str(book))
